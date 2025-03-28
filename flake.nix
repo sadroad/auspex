@@ -4,16 +4,24 @@
   inputs = {
     # Use nixpkgs unstable branch for potentially newer packages
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    rust-overlay = {
+        url = "github:oxalica/rust-overlay";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Utility library to generate flake outputs for multiple systems
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, rust-overlay, flake-utils }:
     # Iterate over default systems (x86_64-linux, aarch64-linux, x86_64-darwin, aarch64-darwin)
     flake-utils.lib.eachDefaultSystem (system:
       let
+        overlays = [ (import rust-overlay)];
         # Import nixpkgs for the specific system
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system overlays;
+        };
 
         # Get the latest stable Rust toolchain from pre-built binaries
         # This includes rustc, cargo, rustfmt, clippy, and the standard library source
@@ -25,9 +33,10 @@
           name = "rust-dev-shell";
 
           # List of packages to make available in the shell environment
-          packages = [
+          packages = with pkgs; [
             rustToolchain      # The core Rust toolchain
-            pkgs.rust-analyzer # Language server for IDEs/editors
+            rust-analyzer # Language server for IDEs/editors
+            just
 
             # --- Add other native build dependencies or tools here ---
             # Example: For crates needing system libraries
