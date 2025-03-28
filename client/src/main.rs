@@ -6,7 +6,7 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let server_url = "ws://192.168.1.21:3001";
+    let server_url = "ws://192.168.1.21:3000/ws";
 
     let mut cmd = Command::new("rpicam-vid");
     cmd.args([
