@@ -19,13 +19,18 @@
       let
         overlays = [ (import rust-overlay)];
         # Import nixpkgs for the specific system
+      
         pkgs = import nixpkgs {
           inherit system overlays;
         };
 
+        pkgsCross = pkgs.pkgsCross.aarch64-multiplatform-musl;
+
         # Get the latest stable Rust toolchain from pre-built binaries
         # This includes rustc, cargo, rustfmt, clippy, and the standard library source
-        rustToolchain = pkgs.rust-bin.stable.latest.default;
+        rustToolchain = pkgs.rust-bin.stable.latest.default.override {
+          targets  = ["aarch64-unknown-linux-musl"];
+        };
       in
       {
         # Define the default development shell
@@ -34,18 +39,10 @@
 
           # List of packages to make available in the shell environment
           packages = with pkgs; [
-            rustToolchain      # The core Rust toolchain
-            rust-analyzer # Language server for IDEs/editors
+            rustToolchain
+            rust-analyzer
             just
-
-            # --- Add other native build dependencies or tools here ---
-            # Example: For crates needing system libraries
-            # pkgs.openssl
-            # pkgs.pkg-config
-
-            # Example: Useful Rust ecosystem tools
-            # pkgs.cargo-watch # Automatically recompile/run on changes
-            # pkgs.cargo-edit  # Add/remove dependencies via command line
+            pkgsCross.buildPackages.gcc
           ];
 
           # Optional: Set environment variables if needed
